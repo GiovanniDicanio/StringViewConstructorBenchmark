@@ -107,22 +107,22 @@ int main()
     //
 
     start = Counter();
-    vector<wstring_view> v2;
+    vector<wstring_view> v1;
     for (const auto& s : shuffled)
     {
         // Invoke the wstring_view one-parameter constructor
         // that takes a C-style null-terminated string
-        v2.push_back(s.GetString());
+        v1.push_back(s.GetString());
     }
     finish = Counter();
     PrintTime(start, finish, "wstring_view(GetString())");
 
     start = Counter();
-    vector<std::wstring_view> v1;
+    vector<wstring_view> v2;
     for (const auto& s : shuffled)
     {
         // Use the AsView() O(1)-length helper function
-        v1.push_back(AsView(s));
+        v2.push_back(AsView(s));
     }
     finish = Counter();
     PrintTime(start, finish, "AsView");
