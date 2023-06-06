@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////
 //
 // String View Creation Benchmark -- by Giovanni Dicanio
+//                                   https://giodicanio.com/
 //
 //////////////////////////////////////////////////////////////////////////
 
@@ -22,21 +23,21 @@
 // Performance Counter Helpers
 //------------------------------------------------------------------------
 
-inline long long Counter() noexcept
+inline [[nodiscard]] long long Counter() noexcept
 {
     LARGE_INTEGER perfCounter;
     ::QueryPerformanceCounter(&perfCounter);
     return perfCounter.QuadPart;
 }
 
-inline long long Frequency() noexcept
+inline [[nodiscard]] long long Frequency() noexcept
 {
     LARGE_INTEGER perfFrequency;
     ::QueryPerformanceFrequency(&perfFrequency);
     return perfFrequency.QuadPart;
 }
 
-void PrintTime(const long long start, const long long finish, const char* const s)
+inline void PrintTime(const long long start, const long long finish, const char* const s)
 {
     std::cout << s << ": " << (finish - start) * 1000.0 / Frequency() << " ms \n";
 }
@@ -45,7 +46,7 @@ void PrintTime(const long long start, const long long finish, const char* const 
 //------------------------------------------------------------------------
 // Helper function that *efficiently* creates a wstring_view to a CString
 //------------------------------------------------------------------------
-inline std::wstring_view AsView(const CString& str)
+inline [[nodiscard]] std::wstring_view AsView(const CString& str)
 {
     return { str.GetString(), static_cast<size_t>(str.GetLength()) };
 }
@@ -76,12 +77,18 @@ int main()
 
         vector<CString> v;
 
-        for (int i = 0; i < (400 * 1000); ++i)
+#ifdef _DEBUG
+        static const int kIterCount = 20;
+#else
+        static const int kIterCount = 400 * 1000;
+#endif // _DEBUG
+
+        for (int i = 0; i < kIterCount; ++i)
         {
             for (const auto& s : lorem)
             {
 #ifdef TEST_TINY_STRINGS
-                // Tiny strings
+                // Tiny strings (SSO enabled for standard strings)
                 UNREFERENCED_PARAMETER(s);
                 v.push_back(CString(L"#") + std::to_wstring(i).c_str());
 #else
@@ -90,13 +97,25 @@ int main()
             }
         }
 
+#define USE_RANDOM_DEVICE_FOR_SEED_INIT
+#ifdef USE_RANDOM_DEVICE_FOR_SEED_INIT
+        std::random_device rd;
+        std::mt19937 prng(rd());
+#else
         std::mt19937 prng(1980);
+#endif // USE_RANDOM_DEVICE_FOR_SEED_INIT
+
         std::shuffle(v.begin(), v.end(), prng);
 
         return v;
     }();
 
+#ifdef _DEBUG
+    // A few strings are tested in debug mode
+    cout << "String count: " << shuffled.size() << "\n\n";
+#else
     cout << "String count: " << (shuffled.size() / 1000) << "k \n\n";
+#endif // _DEBUG
 
     long long start = 0;
     long long finish = 0;
@@ -115,7 +134,7 @@ int main()
         v1.push_back(s.GetString());
     }
     finish = Counter();
-    PrintTime(start, finish, "wstring_view(GetString())");
+    PrintTime(start, finish, "wstring_view(CString::GetString())");
 
     start = Counter();
     vector<wstring_view> v2;
@@ -125,5 +144,5 @@ int main()
         v2.push_back(AsView(s));
     }
     finish = Counter();
-    PrintTime(start, finish, "AsView");
+    PrintTime(start, finish, "AsView(efficient with O(1) length)");
 }
