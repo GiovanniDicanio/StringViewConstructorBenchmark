@@ -7,4 +7,4 @@ Benchmark C++ source code available [here](StringViewCreationBenchmark/StringVie
 
 Code built with Visual Studio 2019 with C++17 features enabled.
 
-The related blog post can be found [here](https://blogs.msmvps.com/gdicanio/2022/04/15/adventures-with-string_view-optimizing-code-with-o1-operations/).
+The related blog post can be found [here](https://giodicanio.com/2023/06/06/optimizing-c-plus-plus-code-with-big-o-1-operations/).
